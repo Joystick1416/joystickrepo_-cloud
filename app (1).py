@@ -1,3 +1,4 @@
+%%writefile app.py
 
 import streamlit as st
 import pymongo
@@ -27,27 +28,18 @@ def connect_to_mongodb():
 def query_theaters_by_city(city_name):
     """Consultar teatros en la base de datos sample_mflix por nombre de ciudad"""
     try:
-        # Conectar a MongoDB
         client = connect_to_mongodb()
         if not client:
             return [], 0   # siempre devolver dos valores
 
-        # Acceder a la base de datos sample_mflix
         db = client.sample_mflix
-
-        # Acceder a la colección de teatros
         theaters_collection = db.theaters
 
-        # Consultar teatros por ciudad
         query = {"location.address.city": city_name}
         theaters = list(theaters_collection.find(query).limit(5))
-
-        # Obtener conteo total
         total_count = theaters_collection.count_documents(query)
 
-        # Cerrar conexión
         client.close()
-
         return theaters, total_count
 
     except Exception as e:
@@ -70,7 +62,20 @@ if st.button("Buscar Teatros"):
 
             if theaters:
                 st.success(f"Se encontraron {total_count} teatros en {city_name}")
-                st.write(f"Mostrando los primeros 5 resultados:")
+                st.write("Mostrando los primeros 5 resultados:")
 
                 for i, theater in enumerate(theaters, 1):
-                    with st.expander
+                    with st.expander(f"Teatro #{i}: {theater.get('location', {}).get('address', {}).get('street1', 'Sin dirección')}"):
+                        st.write(f"**ID:** {theater.get('_id')}")
+                        st.write(f"**Teatro ID:** {theater.get('theaterId')}")
+                        st.write(f"**Dirección:** {theater.get('location', {}).get('address', {}).get('street1')}")
+                        st.write(f"**Ciudad:** {theater.get('location', {}).get('address', {}).get('city')}")
+                        st.write(f"**Estado:** {theater.get('location', {}).get('address', {}).get('state')}")
+                        st.write(f"**Código postal:** {theater.get('location', {}).get('address', {}).get('zipcode')}")
+            else:
+                st.warning(f"No se encontraron teatros en {city_name} o hubo un error en la consulta.")
+    else:
+        st.warning("Por favor ingresa un nombre de ciudad.")
+
+st.divider()
+st.write("Nota: Esta aplicación requiere una conexión a MongoDB Atlas con acceso a la base de datos sample_mflix.")
